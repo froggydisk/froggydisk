@@ -3,7 +3,6 @@
 
 <div align="center">
 
-# <b>Profile 🎇</b>
 ![froggydisk's GitHub stats](https://github-readme-stats.vercel.app/api?username=froggydisk&show_icons=true&theme=dark)
 
 -------------
@@ -54,7 +53,6 @@
 ### 📩 Contact Me
 
 <img src="https://img.shields.io/badge/sewoomkim93@gmail.com-EA4335?style=flat-square&logo=Gmail&logoColor=white"/>
-<img src="https://img.shields.io/badge/sewoomkim@naver.com-03C75A?style=flat-square&logo=Naver&logoColor=white"/>
 
 </div>
 
