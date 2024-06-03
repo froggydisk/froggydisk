@@ -1,5 +1,3 @@
-# <img src="https://capsule-render.vercel.app/api?type=waving&color=0:FCAE1E,100:C71585&height=160&section=header"/>
-
 <div align="center">
 
 ![froggydisk's GitHub stats](https://github-readme-stats.vercel.app/api?username=froggydisk&show_icons=true&theme=dark)
@@ -54,5 +52,3 @@
 <img src="https://img.shields.io/badge/sewoomkim93@gmail.com-EA4335?style=flat-square&logo=Gmail&logoColor=white"/>
 
 </div>
-
-# ![Footer](https://capsule-render.vercel.app/api?type=waving&color=auto&height=160&section=footer)
