@@ -1,7 +1,7 @@
 <div align="center">
 
-[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Ffroggydisk%2F&count_bg=%2379C83D&title_bg=%23555555&icon=github.svg&icon_color=%23E7E7E7&title=Github&edge_flat=false)](https://hits.seeyoufarm.com)
-[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Ffroggydisk.github.io&count_bg=%23C98BFF&title_bg=%23555555&icon=jekyll.svg&icon_color=%23E7E7E7&title=Blog&edge_flat=false)](https://hits.seeyoufarm.com)
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Ffroggydisk%2F&count_bg=%2379C83D&title_bg=%23555555&icon=github.svg&icon_color=%23E7E7E7&title=Github&edge_flat=false)](https://github.com/froggydisk)
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Ffroggydisk.github.io&count_bg=%23C98BFF&title_bg=%23555555&icon=jekyll.svg&icon_color=%23E7E7E7&title=Blog&edge_flat=false)](https://froggydisk.github.io)
 [![Solved.ac프로필](http://mazassumnida.wtf/api/mini/generate_badge?boj=sewoomkim)](https://solved.ac/sewoomkim)
 <p><img src="https://github-readme-stats.vercel.app/api?username=froggydisk&show_icons=true&theme=gruvbox"/></p>
 
