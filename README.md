@@ -1,7 +1,6 @@
 <div align="center">
 
 [![Solved.ac프로필](http://mazassumnida.wtf/api/mini/generate_badge?boj=sewoomkim)](https://solved.ac/sewoomkim)
-<p><img src="https://github-readme-stats.vercel.app/api?username=froggydisk&show_icons=true&theme=gruvbox"/></p>
 
 -------------
 
