@@ -1,4 +1,4 @@
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:2D333B,50:22863A,100:3FB950&height=200&section=header&text=Dr.frog%20%F0%9F%90%B8&fontSize=55&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Software%20Engineer%20%E2%80%A2%20Full-Stack%20%E2%80%A2%20Data%20%E2%80%A2%20DevOps&descAlignY=55&descSize=16" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:2D333B,50:22863A,100:3FB950&height=200&section=header&text=froggydisk&fontSize=55&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Software%20Engineer%20%E2%80%A2%20Full-Stack%20%E2%80%A2%20Data%20%E2%80%A2%20DevOps&descAlignY=55&descSize=16" width="100%"/>
 
 <div align="center">
 
@@ -88,7 +88,6 @@
 
 <div align="center">
 
-<img src="https://github-readme-stats.vercel.app/api?username=froggydisk&show_icons=true&theme=tokyonight&hide_border=true&bg_color=0D1117&icon_color=3FB950&title_color=3FB950" width="49%" />
 <img src="https://github-readme-streak-stats.herokuapp.com/?user=froggydisk&theme=tokyonight&hide_border=true&background=0D1117&ring=3FB950&fire=3FB950&currStreakLabel=3FB950" width="49%" />
 
 <br/>
