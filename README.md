@@ -1,4 +1,4 @@
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:2D333B,50:22863A,100:3FB950&height=200&section=header&text=froggydisk&fontSize=55&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Software%20Engineer%20%E2%80%A2%20Full-Stack%20%E2%80%A2%20Data%20%E2%80%A2%20DevOps&descAlignY=55&descSize=16" width="100%"/>
+### Intro
 
 <div align="center">
 
@@ -8,10 +8,10 @@
 
 <a href="https://froggydisk.github.io">
   <img src="https://img.shields.io/badge/Tech_Blog-20C997?style=for-the-badge&logo=github&logoColor=white"/>
-</a>&nbsp;
+</a>
 <a href="mailto:sewoomkim93@gmail.com">
   <img src="https://img.shields.io/badge/Gmail-EA4335?style=for-the-badge&logo=Gmail&logoColor=white"/>
-</a>&nbsp;
+</a>
 <a href="https://solved.ac/sewoomkim">
   <img src="http://mazassumnida.wtf/api/mini/generate_badge?boj=sewoomkim"/>
 </a>
@@ -95,7 +95,3 @@
 <img src="https://github-readme-activity-graph.vercel.app/graph?username=froggydisk&theme=tokyo-night&hide_border=true&bg_color=0D1117&color=3FB950&line=3FB950&point=FFFFFF" width="98%" />
 
 </div>
-
----
-
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:2D333B,50:22863A,100:3FB950&height=120&section=footer" width="100%"/>
