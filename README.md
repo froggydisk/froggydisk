@@ -1,10 +1,9 @@
 ### Intro
 
+> 서울에서 풀스택 · 데이터 · DevOps를 넘나드는 소프트웨어 엔지니어입니다.
+> 모바일 앱부터 데이터 파이프라인, 쿠버네티스 인프라까지 폭넓게 다루고 있습니다.
+
 <div align="center">
-
-<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=22&duration=3000&pause=1000&color=3FB950&center=true&vCenter=true&random=false&width=450&lines=Building+scalable+systems+%F0%9F%9A%80;Seoul%2C+South+Korea+%F0%9F%87%B0%F0%9F%87%B7" alt="Typing SVG" />
-
-<br/>
 
 <a href="https://froggydisk.github.io">
   <img src="https://img.shields.io/badge/Tech_Blog-20C997?style=for-the-badge&logo=github&logoColor=white"/>
@@ -16,12 +15,11 @@
   <img src="http://mazassumnida.wtf/api/mini/generate_badge?boj=sewoomkim"/>
 </a>
 
+</br>
+
+<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=22&duration=3000&pause=1000&color=3FB950&center=true&vCenter=true&random=false&width=450&lines=Building+scalable+systems+%F0%9F%9A%80;Seoul%2C+South+Korea+%F0%9F%87%B0%F0%9F%87%B7" alt="Typing SVG" />
+
 </div>
-
-<br/>
-
-> 서울에서 풀스택 · 데이터 · DevOps를 넘나드는 소프트웨어 엔지니어입니다.
-> 모바일 앱부터 데이터 파이프라인, 쿠버네티스 인프라까지 폭넓게 다루고 있습니다.
 
 ---
 
