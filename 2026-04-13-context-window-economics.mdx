@@ -1,0 +1,309 @@
+---
+title: "컨텍스트 윈도우의 경제학 — 에이전트에게 무엇을 기억시킬 것인가"
+comments: true
+categories:
+  - Blog
+tags:
+  - AI, Context Window, RAG, Token Economics, Memory
+last_modified_at: 2026-04-13T
+toc: true
+use_math: true
+---
+
+에이전트에게 일을 시키려면, 먼저 맥락을 줘야 한다. 프로젝트의 구조, 코딩 컨벤션, 이전 대화 내용, 참고 문서. 그런데 이 맥락을 담는 공간 — 컨텍스트 윈도우 — 은 유한하다.
+
+100만 토큰짜리 컨텍스트 윈도우가 열리면서 "이제 다 넣으면 되지 않나?"라는 생각이 들기도 한다. 하지만 현실은 그렇지 않다.
+
+## 📍 토큰은 돈이다
+
+컨텍스트 윈도우에 토큰을 넣는 행위는 공짜가 아니다. API 기반 서비스에서 비용 구조를 보면 이렇다:
+
+| 모델 | 입력 토큰 (1M) | 출력 토큰 (1M) |
+|------|---------------|---------------|
+| Claude Sonnet 4.6 | $3 | $15 |
+| Claude Opus 4.6 | $15 | $75 |
+| GPT-4o | $2.50 | $10 |
+
+매 요청마다 컨텍스트 전체가 입력으로 들어간다. 대화가 길어질수록, 참조 문서가 많아질수록, 매 턴의 비용이 선형으로 증가한다.
+
+10턴짜리 대화에서 매 턴 평균 50K 토큰의 컨텍스트를 보낸다고 가정하면:
+
+$$\text{총 입력 토큰} = \sum_{i=1}^{10} 50000 \times i = 50000 \times \frac{10 \times 11}{2} = 2{,}750{,}000$$
+
+Opus 기준으로 입력만 약 $41. 여기에 출력 토큰 비용까지 더하면 대화 한 세션에 수십 달러가 쉽게 나간다. "다 넣으면 되지"는 생각보다 비싼 전략이다.
+
+## 📍 Lost in the Middle — 많이 넣을수록 못 찾는다
+
+비용만이 문제가 아니다. 컨텍스트가 길어지면 모델의 **주의력(attention)** 이 분산된다.
+
+2023년 Stanford와 UC Berkeley의 연구 "Lost in the Middle"은 이 현상을 실험적으로 보여줬다. 20개의 문서를 컨텍스트에 넣고 질문을 던졌을 때, **정답이 위치한 곳에 따라 정확도가 극적으로 달라졌다:**
+
+- 정답이 **처음**에 있을 때: 정확도 ~70%
+- 정답이 **중간**에 있을 때: 정확도 ~40%
+- 정답이 **끝**에 있을 때: 정확도 ~65%
+
+중간에 묻힌 정보는 거의 무시된다. 컨텍스트에 정보를 넣었다고 해서 모델이 그것을 "안다"고 보장할 수 없다는 뜻이다.
+
+이것은 Transformer의 Attention 메커니즘의 구조적 특성이다. Self-Attention의 가중치 분포를 보면:
+
+$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+
+Softmax는 큰 값에 확률을 집중시키고 나머지를 억제한다. 시퀀스가 길어질수록 각 토큰이 받는 평균 attention 가중치는 $\frac{1}{n}$에 수렴하며, 정보가 "희석"된다. 처음과 끝에 위치한 토큰들이 상대적으로 높은 가중치를 받는 것은 positional encoding과 causal mask의 영향이다.
+
+결론: **컨텍스트에 넣는 정보의 양보다, 무엇을 넣고 어디에 배치하느냐가 더 중요하다.**
+
+## 📍 계층적 메모리 — 인간의 기억 구조를 빌리다
+
+그렇다면 에이전트의 기억을 어떻게 설계해야 할까?
+
+인간의 기억 구조에서 힌트를 얻을 수 있다:
+
+| 인간의 기억 | 에이전트 메모리 | 용량 | 접근 속도 |
+|------------|----------------|------|----------|
+| 작업 기억 (Working Memory) | 시스템 프롬프트 + 현재 턴 | ~수천 토큰 | 즉시 |
+| 단기 기억 (Short-term) | 세션 내 대화 히스토리 | ~수만 토큰 | 즉시 |
+| 장기 기억 (Long-term) | 외부 DB + RAG 검색 | 사실상 무한 | 검색 필요 |
+
+밀러의 법칙에 따르면 인간의 작업 기억 용량은 $7 \pm 2$ 개의 청크다. 흥미롭게도 에이전트도 비슷한 제약이 있다. 컨텍스트에 너무 많은 정보를 넣으면 "Lost in the Middle"이 발생하니까, 실질적으로 **동시에 활용 가능한 정보 청크의 수는 제한적**이다.
+
+핵심은 **모든 것을 컨텍스트에 올리는 대신, 필요한 순간에 필요한 기억만 꺼내오는 것**이다.
+
+## 📍 RAG — 필요할 때만 기억을 꺼낸다
+
+RAG(Retrieval-Augmented Generation)는 장기 기억에서 관련 정보를 검색해 컨텍스트에 주입하는 패턴이다. 기본 흐름은 단순하다:
+
+```python
+from openai import OpenAI
+import numpy as np
+
+client = OpenAI()
+
+def get_embedding(text: str) -> list[float]:
+    """텍스트를 임베딩 벡터로 변환"""
+    response = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=text
+    )
+    return response.data[0].embedding
+
+def cosine_similarity(a: list[float], b: list[float]) -> float:
+    """두 벡터 간 코사인 유사도 계산"""
+    a, b = np.array(a), np.array(b)
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+def retrieve(query: str, documents: list[dict], top_k: int = 3) -> list[dict]:
+    """쿼리와 가장 유사한 문서 k개를 검색"""
+    query_embedding = get_embedding(query)
+    
+    scored = []
+    for doc in documents:
+        score = cosine_similarity(query_embedding, doc["embedding"])
+        scored.append({**doc, "score": score})
+    
+    scored.sort(key=lambda x: x["score"], reverse=True)
+    return scored[:top_k]
+```
+
+이전 글 "임베딩 벡터 공간으로 바라본 인간 언어의 본질"에서 다뤘던 것처럼, 임베딩은 텍스트의 의미를 고차원 공간의 좌표로 변환한다. 코사인 유사도가 높을수록 의미적으로 가까운 문서다.
+
+하지만 여기에는 함정이 있다.
+
+**임베딩 검색은 "의미적 유사성"을 기준으로 하지, "질문에 대한 답변 가능성"을 기준으로 하지 않는다.** "서버 벤치마크 결과가 어때?"라는 질문에 대해, 실제 벤치마크 데이터보다 "벤치마크"라는 단어가 많이 등장하는 개념 설명 문서가 더 높은 유사도를 받을 수 있다.
+
+이 문제를 완화하는 방법 중 하나가 **하이브리드 검색**이다:
+
+```python
+def hybrid_retrieve(
+    query: str, 
+    documents: list[dict], 
+    top_k: int = 3,
+    alpha: float = 0.7  # semantic vs keyword 비중
+) -> list[dict]:
+    """시맨틱 검색 + 키워드 검색을 결합"""
+    # 1) 시맨틱 검색 (임베딩 유사도)
+    semantic_scores = get_semantic_scores(query, documents)
+    
+    # 2) 키워드 검색 (BM25)
+    keyword_scores = get_bm25_scores(query, documents)
+    
+    # 3) 점수 정규화 후 결합
+    for doc in documents:
+        doc["hybrid_score"] = (
+            alpha * normalize(semantic_scores[doc["id"]]) +
+            (1 - alpha) * normalize(keyword_scores[doc["id"]])
+        )
+    
+    documents.sort(key=lambda x: x["hybrid_score"], reverse=True)
+    return documents[:top_k]
+```
+
+시맨틱 검색이 놓치는 정확한 키워드 매칭을 BM25가 보완하고, 키워드 검색이 놓치는 의미적 연관성을 임베딩이 보완한다.
+
+## 📍 컨텍스트 압축 — 기억을 요약한다
+
+RAG로 관련 정보만 가져와도, 대화가 길어지면 컨텍스트는 계속 커진다. 이때 필요한 것이 **컨텍스트 압축**이다.
+
+가장 직관적인 방법은 **이전 대화를 요약하는 것**이다:
+
+```python
+def compress_conversation(
+    messages: list[dict], 
+    max_tokens: int = 4000
+) -> list[dict]:
+    """오래된 대화를 요약으로 압축"""
+    total_tokens = count_tokens(messages)
+    
+    if total_tokens <= max_tokens:
+        return messages
+    
+    # 최근 N턴은 원본 유지
+    recent = messages[-6:]     # 최근 3턴 (user + assistant 쌍)
+    old = messages[:-6]        # 나머지는 요약 대상
+    
+    summary = llm_call(
+        system="이전 대화 내용을 핵심만 간결하게 요약해주세요.",
+        messages=old
+    )
+    
+    return [
+        {"role": "system", "content": f"이전 대화 요약:\n{summary}"},
+        *recent
+    ]
+```
+
+이 방식은 Claude Code에서도 실제로 사용된다. 대화가 길어지면 자동으로 이전 메시지를 압축하여 컨텍스트 한도 안에서 대화를 이어간다.
+
+하지만 요약에는 트레이드오프가 있다:
+
+| | 요약 없음 | 요약 적용 |
+|---|----------|----------|
+| 정보 충실도 | 100% | 손실 발생 |
+| 토큰 사용량 | 선형 증가 | 일정 수준 유지 |
+| 비용 | 대화가 길수록 폭발 | 예측 가능 |
+| 디테일 참조 | 가능 | 불가능할 수 있음 |
+
+**요약은 비가역적이다.** 한 번 요약하면 원본의 디테일은 사라진다. "아까 세 번째로 말한 그 코드"를 요약본에서 복원하는 것은 불가능하다.
+
+이것은 이전 글에서 다뤘던 "망각"과 정확히 같은 구조다. 페르소나 에이전트에서 기억의 망각이 필요악이었던 것처럼, 컨텍스트 압축에서의 정보 손실도 시스템이 동작하기 위한 필요조건이다.
+
+## 📍 Sliding Window와 망각 곡선
+
+컨텍스트 관리의 또 다른 전략은 **Sliding Window**다.
+
+전체 대화를 유지하는 대신, 최근 $W$개의 메시지만 컨텍스트에 포함하고 나머지는 버린다. 단순하지만, 예측 가능하고 비용이 일정하다는 장점이 있다.
+
+여기에 에빙하우스의 **망각 곡선**을 적용하면 더 정교한 전략이 된다:
+
+$$R(t) = e^{-t/S}$$
+
+$R$은 기억 유지율, $t$는 시간, $S$는 기억 강도다. 시간이 지날수록 기억은 지수적으로 감소한다.
+
+이것을 에이전트의 컨텍스트 관리에 응용할 수 있다. 각 메시지에 "중요도 점수"를 부여하고, 시간이 지남에 따라 점수를 감쇠시키되, 자주 참조되거나 핵심 결정이 담긴 메시지는 감쇠를 늦춘다:
+
+```python
+import math
+from dataclasses import dataclass
+
+@dataclass
+class MemoryEntry:
+    content: str
+    timestamp: int        # 생성 시점 (턴 번호)
+    base_importance: float # 기본 중요도 (0~1)
+    access_count: int = 0  # 참조 횟수
+    
+    def relevance(self, current_turn: int) -> float:
+        """현재 시점에서의 유효 중요도 계산"""
+        age = current_turn - self.timestamp
+        strength = self.base_importance * (1 + 0.3 * self.access_count)
+        return strength * math.exp(-age / (strength * 20))
+
+def select_context(
+    memories: list[MemoryEntry], 
+    current_turn: int,
+    token_budget: int
+) -> list[MemoryEntry]:
+    """토큰 예산 내에서 가장 관련성 높은 기억을 선택"""
+    scored = [
+        (m, m.relevance(current_turn)) for m in memories
+    ]
+    scored.sort(key=lambda x: x[1], reverse=True)
+    
+    selected = []
+    used_tokens = 0
+    for memory, score in scored:
+        tokens = count_tokens(memory.content)
+        if used_tokens + tokens > token_budget:
+            break
+        selected.append(memory)
+        used_tokens += tokens
+    
+    # 시간순으로 재정렬 (Lost in the Middle 완화)
+    selected.sort(key=lambda m: m.timestamp)
+    return selected
+```
+
+주목할 점은 마지막의 **시간순 재정렬**이다. 관련성 순으로 선택하되, 컨텍스트에 배치할 때는 시간순으로 놓는다. 이렇게 하면 모델이 대화의 흐름을 자연스럽게 따라갈 수 있고, 중간에 무관한 정보가 끼어드는 것을 방지한다.
+
+## 📍 실전에서의 전략 조합
+
+실제 에이전트 시스템에서는 이 전략들을 조합해서 쓴다:
+
+```
+[시스템 프롬프트]           ← 고정, 항상 포함
+[장기 기억 요약]            ← 오래된 대화의 압축본
+[RAG 검색 결과]             ← 현재 질문과 관련된 외부 지식
+[최근 대화 원본]            ← 최근 N턴은 원본 그대로
+[현재 사용자 입력]          ← 가장 마지막에 배치
+```
+
+이 구조는 앞서 설명한 "Lost in the Middle"을 의식한 배치다. **가장 중요한 정보(시스템 프롬프트, 현재 입력)를 처음과 끝에 두고, 참조용 정보를 중간에 배치한다.**
+
+각 계층에 토큰 예산을 할당하는 것도 중요하다:
+
+```python
+def allocate_budget(total_budget: int) -> dict:
+    """계층별 토큰 예산 할당"""
+    return {
+        "system_prompt": int(total_budget * 0.10),  # 10%
+        "long_term_summary": int(total_budget * 0.15),  # 15%
+        "rag_results": int(total_budget * 0.25),  # 25%
+        "recent_conversation": int(total_budget * 0.40),  # 40%
+        "buffer": int(total_budget * 0.10),  # 10% 여유
+    }
+```
+
+비율은 절대적인 것이 아니다. 코딩 에이전트라면 RAG(코드베이스 검색)에 더 많은 예산을 할당하고, 대화형 에이전트라면 최근 대화에 더 많은 예산을 배정하는 식으로 조정한다.
+
+## 📍 모델 부채와의 교차점
+
+이전 글에서 "싼 모델이 결국 더 비싸다"는 모델 부채를 이야기했는데, 컨텍스트 관리에도 같은 원리가 적용된다.
+
+**싼 컨텍스트 전략 = 전부 넣기:**
+- 구현이 쉽다
+- 하지만 비용이 폭발하고, 정확도가 떨어진다
+- 결국 "왜 에이전트가 엉뚱한 답을 하지?"라는 디버깅에 시간을 쏟는다
+
+**비싼 컨텍스트 전략 = 정교한 메모리 설계:**
+- 구현이 복잡하다
+- 하지만 비용이 예측 가능하고, 정확도가 높다
+- 에이전트가 적은 정보로도 정확한 판단을 내린다
+
+모델 선택에서도, 컨텍스트 설계에서도, **"당장 쉬운 길"이 결국 더 비싸다**는 패턴은 반복된다.
+
+## 📍 잘 잊는 것이 지능이다
+
+결국 컨텍스트 윈도우의 경제학은 하나의 질문으로 수렴한다.
+
+> **무엇을 기억하고, 무엇을 잊을 것인가?**
+
+이것은 기술적 최적화의 문제이기도 하지만, 더 근본적으로는 **지능의 본질**에 대한 질문이다.
+
+인간의 뇌가 모든 감각 입력을 그대로 저장한다면, 우리는 한 발짝도 움직이지 못할 것이다. 매 순간 쏟아지는 정보의 홍수 속에서 "이건 중요하고 저건 아니다"라고 판단하는 능력 — 즉 **선택적 망각** — 이 있기에 우리는 사고할 수 있다.
+
+에이전트도 마찬가지다. 100만 토큰을 전부 채우는 에이전트보다, 1만 토큰 안에 정확히 필요한 정보만 담은 에이전트가 더 똑똑하게 행동한다.
+
+임베딩으로 관련 기억을 검색하고, 오래된 대화를 요약으로 압축하고, 중요도에 따라 망각 곡선을 적용하는 것. 이 모든 기법의 본질은 결국 **"잘 잊기 위한 노력"** 이다.
+
+---
+
+> 컨텍스트 윈도우는 에이전트의 작업 기억이다. 무한하지 않고, 공짜도 아니다. 모든 것을 기억하려는 시스템은 아무것도 제대로 기억하지 못한다. 반대로, 무엇을 잊을지 아는 시스템은 — 적은 토큰으로도 정확한 판단을 내린다. 기억의 기술은 곧 망각의 기술이다.
