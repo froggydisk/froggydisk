@@ -11,9 +11,6 @@
 <a href="mailto:sewoomkim93@gmail.com">
   <img src="https://img.shields.io/badge/Gmail-EA4335?style=for-the-badge&logo=Gmail&logoColor=white"/>
 </a>
-<a href="https://solved.ac/sewoomkim">
-  <img src="http://mazassumnida.wtf/api/mini/generate_badge?boj=sewoomkim"/>
-</a>
 
 </br>
 
